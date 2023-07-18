@@ -1,6 +1,6 @@
 # GoCardless extension for MoneyMoney
 
-This extension for [MoneyMoney](https://moneymoney-app.com/) retrieves the balance and transactions of [GoCardless](https://www.paddle.com) vendor accounts.
+This extension for [MoneyMoney](https://moneymoney-app.com/) retrieves the balance and transactions of [GoCardless](https://gocardless.com) vendor accounts.
 
 ## How to use
 
