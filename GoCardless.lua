@@ -413,22 +413,46 @@ function buildTransaction(class, object)
             mandate = getObject("mandate", payment.links.mandate)
         end
 
-        bankAccount = getObject("customer_bank_account", mandate.links.customer_bank_account)
+        -- catch errors with the full error object because we
+        -- need to handle the case of removed customer data
+        local success
+        success, bankAccount = pcall(getObject, "customer_bank_account", mandate.links.customer_bank_account, true)
+        if success == false then
+            -- bankAccount contains the error object
+
+            if bankAccount.errors[1].reason == "customer_data_removed" then
+                -- no customer data available in the API
+                bankAccount = nil
+            else
+                -- general error, throw it to the UI as normal
+                print("Info: " .. bankAccount.documentation_url)
+                error(bankAccount.message .. " (" .. bankAccount.type .. ")")
+            end
+        end
     else
         bankAccount = getObject("creditor_bank_account", object.links.creditor_bank_account)
     end
 
     -- build the base transactions with fields that all classes share
     local transaction = {
-        accountNumber = "····" .. bankAccount.account_number_ending .. " (" .. bankAccount.bank_name .. ")",
         amount = object.amount / 100,
         booked = isBooked(class, object.status),
         bookingDate = parseDate(object.created_at),
         currency = object.currency,
         endToEndReference = object.reference,
-        name = bankAccount.account_holder_name,
         primanotaNumber = object.id,
     }
+
+    if bankAccount ~= nil then
+        transaction.accountNumber = "····"
+            .. bankAccount.account_number_ending
+            .. " ("
+            .. bankAccount.bank_name
+            .. ")"
+        transaction.name = bankAccount.account_holder_name
+    elseif class ~= "payout" then
+        transaction.name = "(" .. localizeText("Removed customer", "Entfernte Kund:in") .. ")"
+    end
 
     -- extend the base transaction with class-specific fields
     if class == "payment" then
