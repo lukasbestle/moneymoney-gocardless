@@ -530,8 +530,9 @@ end
 ---
 ---@param class string Singular object type (slug of the collection in the API)
 ---@param id string ID of the object to return
+---@param fullError? boolean If set to `true`, a full error object is thrown
 ---@return table object
-function getObject(class, id)
+function getObject(class, id, fullError)
     local path = class .. "s/" .. id
 
     -- return object from cache if already requested before
@@ -539,7 +540,7 @@ function getObject(class, id)
         return objectCache[path]
     end
 
-    local response = apiRequest("GET", path)
+    local response = apiRequest("GET", path, nil, fullError)
     objectCache[path] = response[class .. "s"]
     return objectCache[path]
 end
