@@ -603,12 +603,17 @@ end
 ---@param credentials { email: string, password: string, otp_code?: string }
 ---@return LoginChallenge | LoginFailed | string | nil # 2FA challenge or optional error message
 function login(credentials)
-    -- always request a long-active token as we will cache it
-    credentials.trust_device = true
-
     -- try to request a temporary access token; use `pcall()` to handle API errors
-    local status, response =
-        pcall(apiRequest, "POST", "temporary_access_tokens", { temporary_access_tokens = credentials }, true)
+    local status, response = pcall(apiRequest, "POST", "temporary_access_tokens", {
+        temporary_access_tokens = {
+            email = credentials.email,
+            password = credentials.password,
+            otp_code = credentials.otp_code,
+
+            -- always request a long-active token as we will cache it
+            trust_device = true,
+        },
+    }, true)
 
     -- handle auth errors
     if status == false then
@@ -675,6 +680,7 @@ end
 ---@param date string|nil
 ---@param format? "ISO 8601"|"RFC 5322" Defaults to ISO 8601
 ---@return integer|nil timestamp
+---@overload fun(date: string, format?: "ISO 8601"|"RFC 5322"): integer
 function parseDate(date, format)
     format = format or "ISO 8601"
 
