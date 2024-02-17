@@ -117,8 +117,8 @@ function RefreshAccount(account, since)
     -- for the creditor (internal non-documented API, may break)
     local confirmedBalances, pendingBalances = {}, {}
     for balance in getCollection("creditor_balances") do
-        table.insert(confirmedBalances, { balance.confirmed / 100, balance.currency })
-        table.insert(pendingBalances, { balance.pending / 100, balance.currency })
+        table.insert(confirmedBalances, { balance.confirmed and (balance.confirmed / 100) or 0, balance.currency })
+        table.insert(pendingBalances, { balance.pending and (balance.pending / 100) or 0, balance.currency })
     end
 
     -- collect all payments with MoneyMoney booking date since the requested timestamp
