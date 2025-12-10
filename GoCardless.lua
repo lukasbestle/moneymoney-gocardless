@@ -390,7 +390,7 @@ function buildNegativeTransaction(class, event, object)
     local transaction = buildTransaction(class, object)
 
     transaction.amount = -transaction.amount
-    transaction.bookingDate = parseDate(event.created_at)
+    transaction.bookingDate = parseDate(event.created_at --[[@as string]])
 
     return transaction
 end
