@@ -113,12 +113,28 @@ function RefreshAccount(account, since)
     local sinceDate = os.date("!%F", since)
     local sinceDatetime = os.date("!%FT%TZ", since)
 
-    -- collect the balances for all currencies that are in use
-    -- for the creditor (internal non-documented API, may break)
-    local confirmedBalances, pendingBalances = {}, {}
-    for balance in getCollection("creditor_balances") do
-        table.insert(confirmedBalances, { balance.confirmed and (balance.confirmed / 100) or 0, balance.currency })
-        table.insert(pendingBalances, { balance.pending and (balance.pending / 100) or 0, balance.currency })
+    -- collect the balances for all currencies that are in use for the creditor;
+    -- ensure that there is only one pending balance for each currency by
+    -- collecting pending balances in an intermediary variable
+    local confirmedBalances, pendingBalances, pendingBalancesPerCurrency = {}, {}, {}
+    for balance in getCollection("balances", { creditor = account.accountNumber }) do
+        if balance.balance_type == "pending_payments_submitted" then
+            pendingBalancesPerCurrency[balance.currency] =
+                (pendingBalancesPerCurrency[balance.currency] or 0) +
+                (balance.amount and (balance.amount / 100) or 0)
+        elseif balance.balance_type == "confirmed_funds" then
+            table.insert(confirmedBalances, { balance.amount and (balance.amount / 100) or 0, balance.currency })
+        elseif balance.balance_type == "pending_payouts" then
+            -- subtract the pending payout from the pending balance
+            pendingBalancesPerCurrency[balance.currency] =
+                (pendingBalancesPerCurrency[balance.currency] or 0) -
+                (balance.amount and (balance.amount / 100) or 0)
+        else
+            print("Ignoring unknown balance type '" .. balance.balance_type .. "")
+        end
+    end
+    for currency, amount in pairs(pendingBalancesPerCurrency) do
+        table.insert(pendingBalances, { amount, currency })
     end
 
     -- collect all payments with MoneyMoney booking date since the requested timestamp
