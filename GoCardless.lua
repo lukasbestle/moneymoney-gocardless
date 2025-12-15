@@ -26,7 +26,7 @@
 -- SOFTWARE.
 
 WebBanking({
-    version = 1.02,
+    version = 1.10,
     url = "https://api.gocardless.com/",
     services = { "GoCardless" },
     description = string.format(MM.localizeText("Get balance and transactions for %s"), "GoCardless"),
